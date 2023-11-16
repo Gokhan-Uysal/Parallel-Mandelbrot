@@ -3,6 +3,7 @@
 #include <iostream>
 #include <omp.h>
 #include <vector>
+#include <omp.h>
 
 #ifdef KUACC
 std::vector<Point> vertexPixels;
@@ -16,7 +17,8 @@ panDir pan[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 mandelbrot::mandelbrot(){};
 
 mandelbrot::mandelbrot(int width, int height, int max_iteration,
-                       int zoomScalar) {
+                       int zoomScalar)
+{
   this->width = width;
   this->height = height;
   this->max_iteration = max_iteration;
@@ -35,7 +37,8 @@ mandelbrot::mandelbrot(int width, int height, int max_iteration,
 
 #ifdef KUACC
   vertexPixels.reserve(width * height);
-  for (int i = 0; i < width * height; i++) {
+  for (int i = 0; i < width * height; i++)
+  {
     vertexPixels.push_back(Point());
   }
 #else
@@ -48,7 +51,8 @@ mandelbrot::mandelbrot(int width, int height, int max_iteration,
   th = std::thread(&mandelbrot::loop, this);
 }
 
-void mandelbrot::zoomIn(int x, int y) {
+void mandelbrot::zoomIn(int x, int y)
+{
   join();
 
   centerX = picToMand_x(x);
@@ -64,15 +68,19 @@ void mandelbrot::zoomIn(int x, int y) {
   th = std::thread(&mandelbrot::loop, this);
 }
 
-void mandelbrot::save(std::string file_name) {
+void mandelbrot::save(std::string file_name)
+{
   join();
 
   std::ofstream stream;
   stream.open(file_name);
 
-  stream << "P3\n" << width << " " << height << "\n255\n";
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
+  stream << "P3\n"
+         << width << " " << height << "\n255\n";
+  for (int y = 0; y < height; y++)
+  {
+    for (int x = 0; x < width; x++)
+    {
       uint8_t red = vertexPixels[y * height + x].color.r;
       uint8_t green = vertexPixels[y * height + x].color.g;
       uint8_t blue = vertexPixels[y * height + x].color.b;
@@ -84,7 +92,8 @@ void mandelbrot::save(std::string file_name) {
   stream.close();
 }
 
-void mandelbrot::zoomOut() {
+void mandelbrot::zoomOut()
+{
   join();
   zoom /= zoomScalar;
   man_Wid *= zoomScalar;
@@ -96,7 +105,8 @@ void mandelbrot::zoomOut() {
   th = std::thread(&mandelbrot::loop, this);
 }
 
-void mandelbrot::zoomToTop() {
+void mandelbrot::zoomToTop()
+{
   join();
   man_Wid = 5;
   man_Height = 5;
@@ -109,7 +119,8 @@ void mandelbrot::zoomToTop() {
   th = std::thread(&mandelbrot::loop, this);
 }
 
-void mandelbrot::panImg(pan_dir dir) {
+void mandelbrot::panImg(pan_dir dir)
+{
   join();
 
   int step = 100; // In window pixels, not plot units
@@ -130,21 +141,31 @@ void mandelbrot::panImg(pan_dir dir) {
   th = std::thread(&mandelbrot::loop, this);
 }
 
-void mandelbrot::loop() {
+void mandelbrot::loop()
+{
   finished = false;
   pixelCount = 0;
 
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      calculatePixel(x, y);
-      ++pixelCount;
+#pragma omp parallel shared(pixelCount)
+  {
+#pragma omp for collapse(2)
+    for (int y = 0; y < height; y++)
+    {
+      for (int x = 0; x < width; x++)
+      {
+        calculatePixel(x, y, pixelCount);
+#pragma omp critical
+        ++pixelCount;
+      }
     }
   }
 
+#pragma omp barrier
   finished = true;
 }
 
-void mandelbrot::calculatePixel(int pix_X, int pix_Y) {
+void mandelbrot::calculatePixel(int pix_X, int pix_Y, int index)
+{
   LD x0 = picToMand_x(double(pix_X));
   LD y0 = picToMand_y(double(pix_Y));
 
@@ -153,22 +174,27 @@ void mandelbrot::calculatePixel(int pix_X, int pix_Y) {
   LD xtemp = 0;
   LD iter = 0;
 
-  while (((x * x + y * y) <= 4) && iter <= max_iteration) {
+  while (((x * x + y * y) <= 4) && iter <= max_iteration)
+  {
     xtemp = x * x - y * y + x0;
     y = 2 * x * y + y0;
     x = xtemp;
     iter = iter + 1;
   }
 
-  setColor(pix_X, pix_Y, iter);
+  setColor(pix_X, pix_Y, iter, index);
 }
 
-void mandelbrot::setColor(int x, int y, int iterations) {
+void mandelbrot::setColor(int x, int y, int iterations, int index)
+{
 
   int color = 0;
-  if (iterations >= max_iteration) {
+  if (iterations >= max_iteration)
+  {
     color = 0;
-  } else {
+  }
+  else
+  {
     color = 1;
   }
 
@@ -177,8 +203,8 @@ void mandelbrot::setColor(int x, int y, int iterations) {
   int green = 256 - (iterations % 256);
   int blue = 256 - (iterations % 256);
 
-  vertexPixels[pixelCount].position = sf::Vector2f(x, y);
-  vertexPixels[pixelCount].color =
+  vertexPixels[index].position = sf::Vector2f(x, y);
+  vertexPixels[index].color =
       color == 1 ? sf::Color(red, green, blue % 256, 255)
                  : sf::Color(0, 0, 0, 255);
 }

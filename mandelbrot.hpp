@@ -14,73 +14,87 @@
 typedef double LD;
 
 #ifdef KUACC
-namespace sf {
-////////////////////////////////////////////////////////////
-/// \brief Utility template class for manipulating
-///        2-dimensional vectors
-///
-////////////////////////////////////////////////////////////
-template <typename T> class Vector2 {
-public:
-  Vector2(){};
-  Vector2(T X, T Y) {
-    this->x = X;
-    this->y = Y;
+namespace sf
+{
+  ////////////////////////////////////////////////////////////
+  /// \brief Utility template class for manipulating
+  ///        2-dimensional vectors
+  ///
+  ////////////////////////////////////////////////////////////
+  template <typename T>
+  class Vector2
+  {
+  public:
+    Vector2(){};
+    Vector2(T X, T Y)
+    {
+      this->x = X;
+      this->y = Y;
+    };
+
+    template <typename U>
+    explicit Vector2(const Vector2<U> &vector);
+
+    T x; ///< X coordinate of the vector
+    T y; ///< Y coordinate of the vector
   };
 
-  template <typename U> explicit Vector2(const Vector2<U> &vector);
+  template <typename T>
+  Vector2<T> operator-(const Vector2<T> &right);
 
-  T x; ///< X coordinate of the vector
-  T y; ///< Y coordinate of the vector
-};
+  template <typename T>
+  Vector2<T> &operator+=(Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T> Vector2<T> operator-(const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> &operator-=(Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T>
-Vector2<T> &operator+=(Vector2<T> &left, const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> operator+(const Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T>
-Vector2<T> &operator-=(Vector2<T> &left, const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> operator-(const Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T>
-Vector2<T> operator+(const Vector2<T> &left, const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> operator*(const Vector2<T> &left, T right);
 
-template <typename T>
-Vector2<T> operator-(const Vector2<T> &left, const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> operator*(T left, const Vector2<T> &right);
 
-template <typename T> Vector2<T> operator*(const Vector2<T> &left, T right);
+  template <typename T>
+  Vector2<T> &operator*=(Vector2<T> &left, T right);
 
-template <typename T> Vector2<T> operator*(T left, const Vector2<T> &right);
+  template <typename T>
+  Vector2<T> operator/(const Vector2<T> &left, T right);
 
-template <typename T> Vector2<T> &operator*=(Vector2<T> &left, T right);
+  template <typename T>
+  Vector2<T> &operator/=(Vector2<T> &left, T right);
 
-template <typename T> Vector2<T> operator/(const Vector2<T> &left, T right);
+  template <typename T>
+  bool operator==(const Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T> Vector2<T> &operator/=(Vector2<T> &left, T right);
+  template <typename T>
+  bool operator!=(const Vector2<T> &left, const Vector2<T> &right);
 
-template <typename T>
-bool operator==(const Vector2<T> &left, const Vector2<T> &right);
+  typedef Vector2<float> Vector2f;
 
-template <typename T>
-bool operator!=(const Vector2<T> &left, const Vector2<T> &right);
-
-typedef Vector2<float> Vector2f;
-
-class Color {
-public:
-  uint8_t r, g, b, a;
-  Color(){};
-  Color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) {
-    this->r = red;
-    this->g = green;
-    this->b = blue;
-    this->a = alpha;
-  }
-};
+  class Color
+  {
+  public:
+    uint8_t r, g, b, a;
+    Color(){};
+    Color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+    {
+      this->r = red;
+      this->g = green;
+      this->b = blue;
+      this->a = alpha;
+    }
+  };
 
 } // namespace sf
 
-class Point {
+class Point
+{
 public:
   sf::Vector2f position;
   sf::Color color;
@@ -95,16 +109,24 @@ extern sf::VertexArray vertexPixels;
 
 extern int pixels[400][600];
 
-struct panDir {
+struct panDir
+{
   int x;
   int y;
 };
 
-enum pan_dir { left, up, right, down };
+enum pan_dir
+{
+  left,
+  up,
+  right,
+  down
+};
 
 extern panDir pan[4];
 
-class mandelbrot {
+class mandelbrot
+{
 
 private:
   int width;
@@ -132,8 +154,10 @@ private:
 public:
   mandelbrot();
   ~mandelbrot() {}
-  void join() {
-    if (!th.joinable()) {
+  void join()
+  {
+    if (!th.joinable())
+    {
       return;
     }
 
@@ -149,9 +173,9 @@ public:
 
   void save(std::string file_name);
 
-  void calculatePixel(int x, int y);
+  void calculatePixel(int x, int y, int index);
 
-  void setColor(int x, int y, int iterations);
+  void setColor(int x, int y, int iterations, int index);
 
   LD picToMand_x(double x);
   LD picToMand_y(double y);
@@ -159,11 +183,13 @@ public:
   bool isFinished();
 };
 
-inline LD mandelbrot::picToMand_x(double x) {
+inline LD mandelbrot::picToMand_x(double x)
+{
   return (x * (man_Wid / width)) + offsetX;
 }
 
-inline LD mandelbrot::picToMand_y(double y) {
+inline LD mandelbrot::picToMand_y(double y)
+{
   return (-y * (man_Height / height)) + offsetY;
 }
 
