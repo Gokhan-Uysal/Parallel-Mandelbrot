@@ -144,23 +144,23 @@ void mandelbrot::panImg(pan_dir dir)
 void mandelbrot::loop()
 {
   finished = false;
-  pixelCount = 0;
+  int localPixelCount = 0;
 
-#pragma omp parallel firstprivate(pixelCount) reduction(+ : pixelCount)
+#pragma omp parallel
   {
-#pragma omp for collapse(2)
+#pragma omp for collapse(2) reduction(+ : localPixelCount) schedule(dynamic, 10)
     for (int y = 0; y < height; y++)
     {
       for (int x = 0; x < width; x++)
       {
-        calculatePixel(x, y, pixelCount);
-#pragma omp critical
-        ++pixelCount;
+        calculatePixel(x, y, localPixelCount);
       }
     }
   }
 
-#pragma omp barrier
+#pragma omp atomic
+  pixelCount += localPixelCount;
+
   finished = true;
 }
 
