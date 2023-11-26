@@ -146,7 +146,7 @@ void mandelbrot::loop()
   finished = false;
   pixelCount = 0;
 
-#pragma omp parallel shared(pixelCount)
+#pragma omp parallel firstprivate(pixelCount) reduction(+ : pixelCount)
   {
 #pragma omp for collapse(2)
     for (int y = 0; y < height; y++)
